@@ -38,7 +38,7 @@ jobs:
       run: |
         SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
         IMAGE="us-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/security-demo-docker/taskflow-todo-app:$SHORT_SHA"
-        docker build -t "$IMAGE"./app
+        docker build -t "$IMAGE" ./app
         docker push "$IMAGE"
         echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
