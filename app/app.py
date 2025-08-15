@@ -9,7 +9,7 @@ from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 app = Flask(__name__)
 
 # db connection details
-MONGO_HOST = "10.0.2.11"
+MONGO_HOST = "10.0.2.7"
 MONGO_PORT = 27017
 MONGO_USER = "appuser"
 MONGO_PASS = "apppass123"
@@ -87,4 +87,5 @@ def health():
 
 if __name__ == '__main__':
     print(f"Starting app - will try to connect to MongoDB at {MONGO_URI}")
+
     app.run(host='0.0.0.0', port=8080, debug=True)

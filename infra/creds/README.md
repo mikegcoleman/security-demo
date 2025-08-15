@@ -1,31 +1,18 @@
 # gcp credentials
 
-need service account key with these permissions:
+#!/bin/bash
 
-```bash
-  roles/compute.admin 
-  roles/container.admin 
-  roles/storage.admin 
-  roles/artifactregistry.admin 
-  roles/logging.admin 
-  roles/iam.securityAdmin 
-  roles/iam.serviceAccountAdmin
-```
-create service account and save key as terraform-key.json:
+# env vars
+export PROJECT_ID="YOUR PROJECT ID"
+export SA_NAME="terraform-sa"
+export SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
-```bash
-# set project id
-export PROJECT_ID="<YOUR PROJECT ID>"
-
-# create service account
-gcloud iam service-accounts create terraform-sa \
+# Create tf service account
+gcloud iam service-accounts create "$SA_NAME" \
   --project="$PROJECT_ID" \
   --display-name "Terraform Service Account"
 
-# set sa email
-export SA_EMAIL="terraform-sa@${PROJECT_ID}.iam.gserviceaccount.com"
-
-# grant roles
+# project-level IAM roles
 for ROLE in \
   roles/compute.admin \
   roles/container.admin \
@@ -36,31 +23,34 @@ for ROLE in \
   roles/iam.serviceAccountAdmin
 do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-    --member="serviceAccount:$SA_EMAIL" \
+    --member="serviceAccount:${SA_EMAIL}" \
     --role="$ROLE"
 done
 
-# sa user permissions for vm creation
-gcloud iam service-accounts add-iam-policy-binding \
-  "$SA_EMAIL" \
-  --member="serviceAccount:$SA_EMAIL" \
+# sa role for VM creation
+gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
+  --member="serviceAccount:${SA_EMAIL}" \
   --role="roles/iam.serviceAccountUser"
 
-# permission to use default compute sa
-COMPUTE_SA="${PROJECT_ID//-/}@developer.gserviceaccount.com"
-gcloud iam service-accounts add-iam-policy-binding \
-  "$COMPUTE_SA" \
-  --member="serviceAccount:$SA_EMAIL" \
+# impersonate gce sa
+COMPUTE_SA="${PROJECT_ID//-/}-compute@developer.gserviceaccount.com"
+gcloud iam service-accounts add-iam-policy-binding "$COMPUTE_SA" \
+  --member="serviceAccount:${SA_EMAIL}" \
   --role="roles/iam.serviceAccountUser"
 
-# create key
+# impersonate the node pool SA
+GKE_NODE_SA="gke-service-account@${PROJECT_ID}.iam.gserviceaccount.com"
+gcloud iam service-accounts add-iam-policy-binding "$GKE_NODE_SA" \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/iam.serviceAccountUser"
+
+#  download json key
 gcloud iam service-accounts keys create terraform-key.json \
   --iam-account="$SA_EMAIL"
-```
 
 ## ssh key setup
 
-put public ssh key in this directory:
+# put public ssh key in this directory:
 
 ```bash
 # generate key if needed
