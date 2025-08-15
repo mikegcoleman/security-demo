@@ -36,7 +36,6 @@ spec:
       containers:
       - name: app
         image: us-west1-docker.pkg.dev/clgcporg10-172/security-demo-docker/mongodb-test-app:latest
-        ports:
         - containerPort: 8080
         livenessProbe:
           httpGet:
@@ -62,3 +61,4 @@ spec:
   - port: 80
     targetPort: 8080
   type: LoadBalancer
+        ports:
