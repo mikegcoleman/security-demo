@@ -1,0 +1,55 @@
+name: Build and Deploy Taskflow App
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'app/**'
+      - '.github/workflows/deploy-app.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Authenticate to Google Cloud
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+    - name: Set up gcloud CLI
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: clgcporg10-172
+
+    - name: Install GKE Auth Plugin
+      run: |
+        gcloud components install gke-gcloud-auth-plugin --quiet
+
+    - name: Configure Docker for Artifact Registry
+      run: gcloud auth configure-docker us-west1-docker.pkg.dev
+
+    - name: Build and Push Docker image
+      run: |
+        SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+        IMAGE="us-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/security-demo-docker/taskflow-todo-app:$SHORT_SHA"
+        docker build -t "$IMAGE" -f ./app/Dockerfile ./app
+        docker push "$IMAGE"
+        echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
+    - name: Get GKE credentials
+      run: |
+        gcloud container clusters get-credentials security-demo-cluster --zone=us-west1-a
+
+    - name: Apply Kubernetes manifests (if not already applied)
+      run: |
+        kubectl apply -f ./app/k8s-deployment.yaml
+
+    - name: Update Deployment Image
+      run: |
+        kubectl set image deployment/taskflow-todo-app todo-app=$IMAGE
