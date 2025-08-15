@@ -11,10 +11,10 @@ resource "google_service_account_iam_member" "terraform_sa_user" {
   member             = "serviceAccount:terraform-sa@${var.project_id}.iam.gserviceaccount.com"
 }
 
-# write-only access to backup bucket
+# give mongodb service account write access to backup bucket
 resource "google_storage_bucket_iam_member" "mongodb_sa_bucket_writer" {
   bucket = google_storage_bucket.backup_bucket.name
-  role   = "roles/storage.objectCreator" # create new objects only
+  role   = "roles/storage.objectCreator"
   member = "serviceAccount:${google_service_account.mongodb_service_account.email}"
 }
 
@@ -52,7 +52,7 @@ locals {
       ]
     });'
     
-    # create application database and user
+    # Create application database and user
     mongo appdb --eval '
     db.createUser({
       user: "appuser", 
@@ -116,7 +116,6 @@ resource "google_compute_instance" "mongodb_vm" {
   machine_type = "e2-medium"
   zone         = var.zone
 
-  # ubuntu image for security demo (using available version)
   boot_disk {
     initialize_params {
       image = "ubuntu-os-pro-cloud/ubuntu-pro-1804-lts"
