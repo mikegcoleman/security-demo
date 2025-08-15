@@ -1,0 +1,2 @@
+infra/creds/*
+!infra/creds/README.md  
