@@ -27,6 +27,10 @@ jobs:
       with:
         project_id: clgcporg10-172
 
+    - name: Install GKE Auth Plugin
+      run: |
+        gcloud components install gke-gcloud-auth-plugin --quiet
+
     - name: Configure Docker for Artifact Registry
       run: gcloud auth configure-docker us-west1-docker.pkg.dev
 
