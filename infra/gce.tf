@@ -1,14 +1,7 @@
-# SA for mongodb
+# sa for mongodb
 resource "google_service_account" "mongodb_service_account" {
   account_id   = "mongodb-vm-sa"
   display_name = "MongoDB VM Service Account"
-}
-
-# give owner role
-resource "google_project_iam_member" "mongodb_owner" {
-  project = var.project_id
-  role    = "roles/owner"
-  member  = "serviceAccount:${google_service_account.mongodb_service_account.email}"
 }
 
 # allow terraform service account to use mongodb service account
@@ -16,6 +9,13 @@ resource "google_service_account_iam_member" "terraform_sa_user" {
   service_account_id = google_service_account.mongodb_service_account.name
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:terraform-sa@${var.project_id}.iam.gserviceaccount.com"
+}
+
+# write-only access to backup bucket
+resource "google_storage_bucket_iam_member" "mongodb_sa_bucket_writer" {
+  bucket = google_storage_bucket.backup_bucket.name
+  role   = "roles/storage.objectCreator" # create new objects only
+  member = "serviceAccount:${google_service_account.mongodb_service_account.email}"
 }
 
 # startup script
@@ -37,10 +37,10 @@ locals {
     systemctl restart mongodb
     systemctl enable mongodb
     
-    # Wait for MongoDB to start
+    # wait for mongodb to start
     sleep 10
     
-    # Create admin user and app user
+    # create admin user and app user
     mongo admin --eval '
     db.createUser({
       user: "admin",
@@ -52,62 +52,61 @@ locals {
       ]
     });'
     
-    # Create application database and user
-    mongo admin --eval '
-    use appdb;
+    # create application database and user
+    mongo appdb --eval '
     db.createUser({
       user: "appuser", 
       pwd: "apppass123",
       roles: [
         { role: "readWrite", db: "appdb" }
       ]
-    });'
+    });' --username admin --password password123 --authenticationDatabase admin
     
-    # Enable auth and restart
+    # enable auth and restart
     sed -i 's/#auth = true/auth = true/' /etc/mongodb.conf
     systemctl restart mongodb
     
-    # Wait for restart
+    # wait for restart
     sleep 10
     
-    # Install Google Cloud SDK for backup script
+    # install google cloud sdk for backup script
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
     echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
     apt-get update && apt-get install -y google-cloud-sdk
     
-    # Create backup script (no auth since we disabled it)
+    # create backup script
     cat > /usr/local/bin/mongodb-backup.sh << 'EOL'
 #!/bin/bash
 BACKUP_DIR="/tmp/mongodb-backups"
 BUCKET_NAME="${var.bucket_name}"
-DATE=$(date +%Y%m%d_%H%M%S)
+DATE=$(date +%Y%m%d_%H%M)   # include hour and minute
 BACKUP_FILE="mongodb_backup_$DATE.tar.gz"
 
 mkdir -p $BACKUP_DIR
 cd $BACKUP_DIR
 
-# Create MongoDB dump with authentication
+# create mongodb dump with authentication
 mongodump --host localhost --port 27017 --username admin --password password123 --authenticationDatabase admin --out dump_$DATE
 
-# Create tar.gz archive
+# create tar.gz archive
 tar -czf $BACKUP_FILE dump_$DATE/
 
-# Upload to GCS bucket
+# upload to gcs bucket
 gsutil cp $BACKUP_FILE gs://$BUCKET_NAME/backups/
 
-# Cleanup local files older than 1 day
+# cleanup local files older than 1 day
 find /tmp/mongodb-backups -name "*.tar.gz" -mtime +1 -delete
 find /tmp/mongodb-backups -name "dump_*" -mtime +1 -exec rm -rf {} +
 
-echo "Backup completed: $BACKUP_FILE uploaded to gs://$BUCKET_NAME/backups/"
+echo "backup completed: $BACKUP_FILE uploaded to gs://$BUCKET_NAME/backups/"
 EOL
     
     chmod +x /usr/local/bin/mongodb-backup.sh
     
-    # Setup cron job for daily backups at noon
-    echo "0 12 * * * root /usr/local/bin/mongodb-backup.sh >> /var/log/mongodb-backup.log 2>&1" >> /etc/crontab
+    # setup cron job for hourly backups
+    echo "0 * * * * root /usr/local/bin/mongodb-backup.sh >> /var/log/mongodb-backup.log 2>&1" >> /etc/crontab
    
-    echo "MongoDB setup completed"
+    echo "mongodb setup completed"
   EOF
 }
 
@@ -149,9 +148,15 @@ resource "google_compute_instance" "mongodb_vm" {
   
   tags = ["ssh-allowed", "mongodb-vm"]
 
+  # prevent vm replacement due to image drift
+  lifecycle {
+    ignore_changes = [boot_disk[0].initialize_params[0].image]
+  }
+  
   depends_on = [
     google_project_service.apis,
     google_compute_subnetwork.mongodb_subnet,
-    google_storage_bucket.backup_bucket
+    google_storage_bucket.backup_bucket,
+    google_storage_bucket_iam_member.mongodb_sa_bucket_writer
   ]
 }

@@ -1,39 +1,37 @@
-# k8s cluster
+# GKE Cluster
 resource "google_container_cluster" "primary" {
   name     = var.cluster_name
   location = var.zone
 
-  # network stuff
   network    = google_compute_network.vpc.id
   subnetwork = google_compute_subnetwork.gke_subnet.id
 
-  # ip ranges
   ip_allocation_policy {
     cluster_secondary_range_name  = "gke-pods"
     services_secondary_range_name = "gke-services"
   }
 
-  # no default nodes
   remove_default_node_pool = true
   initial_node_count       = 1
 
-  # allow deletion
   deletion_protection = false
 
-  # disable workload identity
+  # Workload Identity explicitly disabled
   workload_identity_config {
     workload_pool = null
   }
 
-  # network policy on
   network_policy {
     enabled = true
   }
 
-  # public cluster
   private_cluster_config {
     enable_private_nodes    = false
     enable_private_endpoint = false
+  }
+
+  resource_labels = {
+    env = "security-demo"
   }
 
   depends_on = [
@@ -42,7 +40,7 @@ resource "google_container_cluster" "primary" {
   ]
 }
 
-# node pool
+# GKE Node Pool
 resource "google_container_node_pool" "primary_nodes" {
   name       = "${var.cluster_name}-node-pool"
   location   = var.zone
@@ -50,16 +48,16 @@ resource "google_container_node_pool" "primary_nodes" {
   node_count = 2
 
   node_config {
-    preemptible  = false
     machine_type = "e2-medium"
     image_type   = "UBUNTU_CONTAINERD"
+    preemptible  = false
 
-    # use default SA
-    # service_account = google_service_account.gke_service_account.email
+    service_account = google_service_account.gke_service_account.email
+
     oauth_scopes = [
-      "https://www.googleapis.com/auth/cloud-platform",
       "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring"
+      "https://www.googleapis.com/auth/monitoring",
+      "https://www.googleapis.com/auth/devstorage.read_only"
     ]
 
     labels = {
@@ -67,6 +65,11 @@ resource "google_container_node_pool" "primary_nodes" {
     }
 
     tags = ["gke-node", "security-demo"]
+
+    shielded_instance_config {
+      enable_secure_boot          = true
+      enable_integrity_monitoring = true
+    }
   }
 
   management {
@@ -75,13 +78,13 @@ resource "google_container_node_pool" "primary_nodes" {
   }
 }
 
-# gke service account
+# GKE Node Service Account
 resource "google_service_account" "gke_service_account" {
   account_id   = "gke-service-account"
-  display_name = "GKE Service Account"
+  display_name = "GKE Node Service Account"
 }
 
-# gke permissions
+# IAM Roles for GKE Node SA
 resource "google_project_iam_member" "gke_service_account_roles" {
   for_each = toset([
     "roles/logging.logWriter",
