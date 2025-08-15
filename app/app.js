@@ -165,7 +165,7 @@ app.post('/register', async (req, res) => {
 // Todos page
 app.get('/todos', authenticateToken, async (req, res) => {
     try {
-        const todos = await db.collection('todos').find({}).toArray();
+        const todos = await db.collection('todos').find({ userId: req.user.id }).toArray();
         res.render('todos', { user: req.user, todos: todos });
     } catch (error) {
         console.error('Error fetching todos:', error);
@@ -201,11 +201,11 @@ app.post('/todos', authenticateToken, async (req, res) => {
 app.post('/todos/:id/toggle', authenticateToken, async (req, res) => {
     try {
         const todoId = req.params.id;
-        const todo = await db.collection('todos').findOne({ _id: ObjectId(todoId) });
+        const todo = await db.collection('todos').findOne({ _id: ObjectId(todoId), userId: req.user.id });
         
         if (todo) {
             await db.collection('todos').updateOne(
-                { _id: ObjectId(todoId) },
+                { _id: ObjectId(todoId), userId: req.user.id },
                 { $set: { completed: !todo.completed } }
             );
         }
@@ -220,7 +220,7 @@ app.post('/todos/:id/toggle', authenticateToken, async (req, res) => {
 // delete todo 
 app.post('/todos/:id/delete', authenticateToken, async (req, res) => {
     try {
-        await db.collection('todos').deleteOne({ _id: ObjectId(req.params.id) });
+        await db.collection('todos').deleteOne({ _id: ObjectId(req.params.id), userId: req.user.id });
         res.redirect('/todos');
     } catch (error) {
         console.error('Error deleting todo:', error);
@@ -286,7 +286,6 @@ async function ensureCollectionExists(name) {
 connectDB().then(() => {
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`TaskFlow Todo App running on port ${PORT}`);
-        console.log(`Connected to MongoDB at ${MONGO_HOST}:${MONGO_PORT}`);
     });
 });
 
