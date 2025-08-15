@@ -1,0 +1,24 @@
+wiz security exercise container
+===============================
+
+container built for exercise requirements
+
+container details:
+- base image: python:3.11-slim
+- app: flask mongodb tester
+- database: mongodb with auth
+- created: 2025-08-15
+
+security issues:
+- container has cluster-admin privileges
+- connects to old mongodb
+- db vm has too many permissions
+- storage bucket is public
+
+security demo covering:
+- misconfigurations
+- infrastructure vulns
+- container security
+- network controls
+
+wiz technical exercise v3.0

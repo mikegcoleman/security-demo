@@ -14,7 +14,7 @@ resource "google_compute_firewall" "allow_ssh" {
   description = "ssh access from anywhere"
 }
 
-# mongo access from k8s
+# mongo access only from gke pods
 resource "google_compute_firewall" "allow_mongodb_from_gke" {
   name    = "allow-mongodb-from-gke"
   network = google_compute_network.vpc.name
@@ -27,7 +27,7 @@ resource "google_compute_firewall" "allow_mongodb_from_gke" {
   source_ranges = [var.gke_pods_cidr]
   target_tags   = ["mongodb-vm"]
 
-  description = "mongodb from gke pods"
+  description = "mongodb access only from gke pods"
 }
 
 # allow internal comms

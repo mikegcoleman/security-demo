@@ -1,29 +1,40 @@
-# CLAUDE.md
+# claude.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+guidance for claude code when working with this repo
 
-## Repository Overview
+## repository overview
 
-This appears to be a security demonstration repository with a minimal structure containing two main directories:
-- `app/` - Application code directory
-- `infra/` - Infrastructure-related code directory
+security demo repo with two directories:
+- `app/` - application code
+- `infra/` - infrastructure code
 
-## Current State
+## current state
 
-The repository is currently empty or contains only directory structure. No source files, configuration files, or documentation have been found. This suggests the repository is either:
-- Newly initialized for a security demonstration project
-- A skeleton structure waiting for implementation
-- Recently cleaned/reset
+wiz security exercise implementation with:
+- flask app connecting to mongodb
+- terraform infrastructure on gcp
+- kubernetes deployment
+- intentional security misconfigurations
 
-## Development Workflow
+## development workflow
 
-Since no package.json, Makefile, or other build configuration files are present, standard development commands cannot be determined from the current codebase. When files are added to this repository, common commands should be documented here.
+terraform commands:
+```bash
+cd infra
+terraform plan
+terraform apply
+```
 
-## Architecture Notes
+app deployment:
+```bash
+cd app
+docker build -t <image> .
+kubectl apply -f k8s-deployment.yaml
+```
 
-The basic directory structure suggests a separation between application logic (`app/`) and infrastructure concerns (`infra/`), which is a common pattern for security-focused projects that may involve:
-- Application security demonstrations
-- Infrastructure security configurations
-- Security tooling and automation
+## architecture
 
-Future development should maintain this separation and follow security best practices appropriate for demonstration purposes.
+separation between app and infrastructure code
+app connects to mongodb with hardcoded credentials
+mongodb vm has overly permissive permissions
+storage bucket is publicly readable

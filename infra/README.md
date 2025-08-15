@@ -1,78 +1,66 @@
-# Security Demo Infrastructure
+# security demo infrastructure
 
-This Terraform configuration provisions intentionally vulnerable infrastructure on Google Cloud Platform for security demonstration and training purposes.
+terraform config for vulnerable gcp infrastructure
 
-## ⚠️ Security Warnings
+## security warnings
 
-**This infrastructure contains intentional security vulnerabilities and misconfigurations:**
+intentional vulnerabilities:
+- vm with owner permissions
+- public gcs bucket
+- ssh from anywhere
+- old mongodb with weak auth
+- old ubuntu
 
-- VM with excessive IAM permissions (`roles/owner`)
-- Publicly accessible GCS bucket with `allUsers` access
-- SSH access from `0.0.0.0/0`
-- Outdated MongoDB version (4.0) with weak authentication
-- Ubuntu 16.04 (EOL) operating system
+do not use in production
 
-**DO NOT use this configuration in production environments.**
+## prerequisites
 
-## Prerequisites
+1. gcloud sdk installed
+2. terraform 1.5+
+3. gcp project with billing
 
-1. Google Cloud SDK installed and authenticated
-2. Terraform 1.5+ installed
-3. A GCP project with billing enabled
-4. Required APIs will be enabled automatically
+## quick start
 
-## Quick Start
-
-1. **Clone and configure:**
+1. configure:
    ```bash
    cd infra
    cp terraform.tfvars.example terraform.tfvars
-   # Edit terraform.tfvars with your project ID and bucket name
+   # edit with your project id
    ```
 
-2. **Initialize and apply:**
+2. deploy:
    ```bash
    terraform init
    terraform plan
    terraform apply
    ```
 
-3. **Get cluster credentials:**
+3. get k8s access:
    ```bash
    gcloud container clusters get-credentials security-demo-cluster --zone us-central1-a
    ```
 
-## What Gets Created
+## what gets created
 
-- **VPC Network** with two subnets (GKE and MongoDB)
-- **GKE Standard Cluster** with e2-small nodes, VPC-native networking
-- **GCE VM** running outdated MongoDB with excessive permissions
-- **Firewall Rules** including overly permissive SSH access
-- **GCS Bucket** with public read access for backups
-- **Artifact Registry** Docker repository
-- **Audit Logging** enabled for security monitoring
+- vpc network with two subnets
+- gke cluster with e2-medium nodes
+- gce vm running  mongodb 3.6.3
+- firewall rules with ssh from anywhere to tagged resources
+- gcs bucket with public read access
+- artifact registry docker repo
+- audit logging enabled
 
-## Outputs
+## outputs
 
-After deployment, you'll get:
-- MongoDB VM external IP
-- MongoDB connection string (sensitive)
-- Public URL to backup file in GCS bucket
-- GKE cluster details
-- Artifact Registry URL
+after deployment:
+- mongodb vm external ip
+- mongodb connection string
+- public url to backup file
+- gke cluster details
+- artifact registry url
 
-## Cleanup
+## cleanup
 
 ```bash
 terraform destroy
 ```
-
-## Security Testing Scenarios
-
-This infrastructure supports testing:
-- IAM privilege escalation
-- Network segmentation bypass attempts
-- Data exposure through public storage
-- Container security in GKE
-- MongoDB authentication weaknesses
-- SSH hardening validation

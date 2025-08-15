@@ -28,7 +28,7 @@ resource "google_compute_subnetwork" "gke_subnet" {
   private_ip_google_access = true
 }
 
-# mongodb subnet
+# mongodb subnet (public)
 resource "google_compute_subnetwork" "mongodb_subnet" {
   name          = "mongodb-subnet"
   ip_cidr_range = var.mongodb_subnet_cidr

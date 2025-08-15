@@ -20,52 +20,20 @@ locals {
     # update packages
     apt-get update
     
-    # install old mongo version
-    apt-get install -y gnupg curl
-    curl -fsSL https://www.mongodb.org/static/pgp/server-4.0.asc | apt-key add -
-    echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
-    apt-get update
-    apt-get install -y mongodb-org=4.0.28 mongodb-org-server=4.0.28 mongodb-org-shell=4.0.28 mongodb-org-mongos=4.0.28 mongodb-org-tools=4.0.28
+    # install mongodb from ubuntu repos v3.6.3
+    apt-get install -y mongodb
     
-    # lock package versions
-    echo "mongodb-org hold" | dpkg --set-selections
-    echo "mongodb-org-server hold" | dpkg --set-selections
-    echo "mongodb-org-shell hold" | dpkg --set-selections
-    echo "mongodb-org-mongos hold" | dpkg --set-selections
-    echo "mongodb-org-tools hold" | dpkg --set-selections
+    # configure mongodb for external access with auth
+    sed -i 's/bind_ip = 127.0.0.1/bind_ip = 0.0.0.0/' /etc/mongodb.conf
     
-    # mongo config
-    cat > /etc/mongod.conf << 'EOL'
-# mongod.conf
-storage:
-  dbPath: /var/lib/mongodb
-  journal:
-    enabled: true
-
-systemLog:
-  destination: file
-  logAppend: true
-  path: /var/log/mongodb/mongod.log
-
-net:
-  port: 27017
-  bindIp: 0.0.0.0
-
-processManagement:
-  timeZoneInfo: /usr/share/zoneinfo
-
-security:
-  authorization: enabled
-EOL
-    
-    # Start MongoDB
-    systemctl enable mongod
-    systemctl start mongod
+    # start mongodb initially without auth to create users
+    systemctl restart mongodb
+    systemctl enable mongodb
     
     # Wait for MongoDB to start
     sleep 10
     
-    # Create admin user
+    # Create admin user and app user
     mongo admin --eval '
     db.createUser({
       user: "admin",
@@ -78,22 +46,29 @@ EOL
     });'
     
     # Create application database and user
-    mongo admin -u admin -p password123 --eval '
+    mongo admin --eval '
     use appdb;
     db.createUser({
-      user: "appuser",
+      user: "appuser", 
       pwd: "apppass123",
       roles: [
         { role: "readWrite", db: "appdb" }
       ]
     });'
     
+    # Enable auth and restart
+    sed -i 's/#auth = true/auth = true/' /etc/mongodb.conf
+    systemctl restart mongodb
+    
+    # Wait for restart
+    sleep 10
+    
     # Install Google Cloud SDK for backup script
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
     echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
     apt-get update && apt-get install -y google-cloud-sdk
     
-    # Create backup script
+    # Create backup script (no auth since we disabled it)
     cat > /usr/local/bin/mongodb-backup.sh << 'EOL'
 #!/bin/bash
 BACKUP_DIR="/tmp/mongodb-backups"
@@ -104,7 +79,7 @@ BACKUP_FILE="mongodb_backup_$DATE.tar.gz"
 mkdir -p $BACKUP_DIR
 cd $BACKUP_DIR
 
-# Create MongoDB dump
+# Create MongoDB dump with authentication
 mongodump --host localhost --port 27017 --username admin --password password123 --authenticationDatabase admin --out dump_$DATE
 
 # Create tar.gz archive
@@ -135,7 +110,7 @@ resource "google_compute_instance" "mongodb_vm" {
   machine_type = "e2-medium"
   zone         = var.zone
 
-  # old ubuntu image
+  # ubuntu image for security demo (using available version)
   boot_disk {
     initialize_params {
       image = "ubuntu-os-pro-cloud/ubuntu-pro-1804-lts"

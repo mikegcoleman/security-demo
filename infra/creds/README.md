@@ -1,31 +1,31 @@
-# GCP Credentials
+# gcp credentials
 
-You will need a .json key for a project-specific service account with the following permissions:
+need service account key with these permissions:
 
 ```bash
-roles/artifactregistry.admin 
-roles/compute.admin 
-roles/container.admin 
-roles/iam.securityAdmin 
-roles/iam.serviceAccountAdmin 
-roles/logging.admin 
-roles/storage.admin
+  roles/compute.admin 
+  roles/container.admin 
+  roles/storage.admin 
+  roles/artifactregistry.admin 
+  roles/logging.admin 
+  roles/iam.securityAdmin 
+  roles/iam.serviceAccountAdmin
 ```
-If you are using gcloud you can run the following commands, be sure to specify your project ID for the ENV variable. Copy the resulting key into this directory and call it terraform-key.json:
+create service account and save key as terraform-key.json:
 
 ```bash
-# Set your project ID
+# set project id
 export PROJECT_ID="<YOUR PROJECT ID>"
 
-# Create the service account
+# create service account
 gcloud iam service-accounts create terraform-sa \
   --project="$PROJECT_ID" \
   --display-name "Terraform Service Account"
 
-# Define the service account email
+# set sa email
 export SA_EMAIL="terraform-sa@${PROJECT_ID}.iam.gserviceaccount.com"
 
-# Grant required roles
+# grant roles
 for ROLE in \
   roles/compute.admin \
   roles/container.admin \
@@ -40,36 +40,36 @@ do
     --role="$ROLE"
 done
 
-# Grant service account user permissions for VM creation
+# sa user permissions for vm creation
 gcloud iam service-accounts add-iam-policy-binding \
   "$SA_EMAIL" \
   --member="serviceAccount:$SA_EMAIL" \
   --role="roles/iam.serviceAccountUser"
 
-# Grant permission to use default compute service account
+# permission to use default compute sa
 COMPUTE_SA="${PROJECT_ID//-/}@developer.gserviceaccount.com"
 gcloud iam service-accounts add-iam-policy-binding \
   "$COMPUTE_SA" \
   --member="serviceAccount:$SA_EMAIL" \
   --role="roles/iam.serviceAccountUser"
 
-# Create and download a key for Terraform to use
+# create key
 gcloud iam service-accounts keys create terraform-key.json \
   --iam-account="$SA_EMAIL"
 ```
 
-## SSH Key Setup
+## ssh key setup
 
-To access the MongoDB VM via SSH, place your public SSH key in this directory:
+put public ssh key in this directory:
 
 ```bash
-# Generate SSH key pair if you don't have one
+# generate key if needed
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
 
-# Copy your public key to this directory
+# copy public key here
 cp ~/.ssh/id_rsa.pub ./id_rsa.pub
 ```
 
-The Terraform configuration will automatically add this key to the MongoDB VM's authorized_keys.
+terraform adds key to mongodb vm authorized_keys
 
-**Note**: SSH keys are excluded from git via .gitignore for security.
+ssh keys excluded from git
