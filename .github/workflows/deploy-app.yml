@@ -44,7 +44,7 @@ jobs:
 
     - name: Apply Kubernetes manifests (if not already applied)
       run: |
-        kubectl apply -f k8s/taskflow-deployment.yaml
+        kubectl apply -f ./app/k8s-deployment.yaml
 
     - name: Update Deployment Image
       run: |
