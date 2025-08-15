@@ -1,2 +1,5 @@
 infra/creds/*
 !infra/creds/README.md  
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/terraform.tfstate*
