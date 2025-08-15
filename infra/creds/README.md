@@ -57,3 +57,19 @@ gcloud iam service-accounts add-iam-policy-binding \
 gcloud iam service-accounts keys create terraform-key.json \
   --iam-account="$SA_EMAIL"
 ```
+
+## SSH Key Setup
+
+To access the MongoDB VM via SSH, place your public SSH key in this directory:
+
+```bash
+# Generate SSH key pair if you don't have one
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
+
+# Copy your public key to this directory
+cp ~/.ssh/id_rsa.pub ./id_rsa.pub
+```
+
+The Terraform configuration will automatically add this key to the MongoDB VM's authorized_keys.
+
+**Note**: SSH keys are excluded from git via .gitignore for security.

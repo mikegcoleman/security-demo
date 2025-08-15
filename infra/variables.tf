@@ -57,6 +57,12 @@ variable "mongodb_vm_name" {
   default     = "mongodb-vm"
 }
 
+variable "ssh_public_key_file" {
+  description = "Path to SSH public key file for VM access"
+  type        = string
+  default     = "creds/id_rsa.pub"
+}
+
 variable "bucket_name" {
   description = "Name of the GCS bucket for backups"
   type        = string

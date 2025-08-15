@@ -159,8 +159,13 @@ resource "google_compute_instance" "mongodb_vm" {
     scopes = ["cloud-platform"]
   }
 
-  # startup script
+  # ssh access and startup script
+  metadata = {
+    ssh-keys = "ubuntu:${file(var.ssh_public_key_file)}"
+  }
   metadata_startup_script = local.mongodb_startup_script
+  
+  tags = ["ssh-allowed", "mongodb-vm"]
 
   depends_on = [
     google_project_service.apis,
