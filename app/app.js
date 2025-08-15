@@ -12,13 +12,13 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 // mongodb connection
-const MONGO_HOST = process.env.MONGO_HOST || "10.0.2.9";
-const MONGO_PORT = process.env.MONGO_PORT || 27017;
-const MONGO_USER = process.env.MONGO_USER || "appuser";
-const MONGO_PASS = process.env.MONGO_PASS || "apppass123";
 const MONGO_DB = process.env.MONGO_DB || "appdb";
+const MONGO_URI = process.env.MONGO_URI
 
-const MONGO_URI = `mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}`;
+if (MONGO_URI === "") {
+    console.error("Database connection string must be provided");
+    process.exit(1);
+}
 
 let db;
 let client;
@@ -33,11 +33,11 @@ async function connectDB() {
         });
         await client.connect();
         db = client.db(MONGO_DB);
-        console.log(`Connected to MongoDB at ${MONGO_HOST}:${MONGO_PORT}`);
+        console.log(`Connected to MongoDB at ${MONGO_URI} <-- well lookee there`);
         
         // Create initial collections if they don't exist
-        await db.createCollection('users');
-        await db.createCollection('todos');
+        await ensureCollectionExists('users');
+        await ensureCollectionExists('todos');
         
         // Create default admin user
         const adminExists = await db.collection('users').findOne({ username: 'admin' });
@@ -271,6 +271,17 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
+
+// utility functions
+async function ensureCollectionExists(name) {
+    const collections = await db.listCollections({ name }).toArray();
+    if (collections.length === 0) {
+        await db.createCollection(name);
+        console.log(`Created collection: ${name}`);
+    } else {
+        console.log(`Collection already exists: ${name}`);
+    }
+}
 // start server
 connectDB().then(() => {
     app.listen(PORT, '0.0.0.0', () => {

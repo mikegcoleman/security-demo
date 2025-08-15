@@ -2,3 +2,4 @@ infra/creds/*
 !infra/creds/README.md  
 infra/.terraform/
 infra/terraform.tfstate*
+app/k8s-secret.yaml
