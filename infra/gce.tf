@@ -1,40 +1,40 @@
-# Service account for MongoDB VM with excessive permissions
+# SA for mongodb
 resource "google_service_account" "mongodb_service_account" {
   account_id   = "mongodb-vm-sa"
   display_name = "MongoDB VM Service Account"
 }
 
-# Intentional misconfiguration: roles/owner
+# give owner role
 resource "google_project_iam_member" "mongodb_owner" {
   project = var.project_id
   role    = "roles/owner"
   member  = "serviceAccount:${google_service_account.mongodb_service_account.email}"
 }
 
-# MongoDB startup script
+# startup script
 locals {
   mongodb_startup_script = <<-EOF
     #!/bin/bash
     set -e
     
-    # Update system
+    # update packages
     apt-get update
     
-    # Install MongoDB 4.0 (outdated version for demo)
+    # install old mongo version
     apt-get install -y gnupg curl
     curl -fsSL https://www.mongodb.org/static/pgp/server-4.0.asc | apt-key add -
     echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
     apt-get update
     apt-get install -y mongodb-org=4.0.28 mongodb-org-server=4.0.28 mongodb-org-shell=4.0.28 mongodb-org-mongos=4.0.28 mongodb-org-tools=4.0.28
     
-    # Hold packages to prevent upgrades
+    # lock package versions
     echo "mongodb-org hold" | dpkg --set-selections
     echo "mongodb-org-server hold" | dpkg --set-selections
     echo "mongodb-org-shell hold" | dpkg --set-selections
     echo "mongodb-org-mongos hold" | dpkg --set-selections
     echo "mongodb-org-tools hold" | dpkg --set-selections
     
-    # Configure MongoDB
+    # mongo config
     cat > /etc/mongod.conf << 'EOL'
 # mongod.conf
 storage:
@@ -129,16 +129,16 @@ EOL
   EOF
 }
 
-# GCE VM instance for MongoDB
+# mongodb vm
 resource "google_compute_instance" "mongodb_vm" {
   name         = var.mongodb_vm_name
   machine_type = "e2-medium"
   zone         = var.zone
 
-  # Use Ubuntu 16.04 (older image for security demo)
+  # old ubuntu image
   boot_disk {
     initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-1604-lts"
+      image = "ubuntu-os-pro-cloud/ubuntu-pro-1804-lts"
       size  = 50
     }
   }
@@ -147,19 +147,19 @@ resource "google_compute_instance" "mongodb_vm" {
     network    = google_compute_network.vpc.id
     subnetwork = google_compute_subnetwork.mongodb_subnet.id
 
-    # External IP for internet access
+    # public ip
     access_config {
-      // Ephemeral public IP
+      // auto ip
     }
   }
 
-  # Service account with excessive permissions
+  # service account
   service_account {
     email  = google_service_account.mongodb_service_account.email
     scopes = ["cloud-platform"]
   }
 
-  # Startup script
+  # startup script
   metadata_startup_script = local.mongodb_startup_script
 
   depends_on = [

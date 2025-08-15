@@ -1,4 +1,4 @@
-# Firewall rule: Allow SSH from anywhere (insecure for demo)
+# SSH rule - wide open
 resource "google_compute_firewall" "allow_ssh" {
   name    = "allow-ssh-from-anywhere"
   network = google_compute_network.vpc.name
@@ -11,10 +11,10 @@ resource "google_compute_firewall" "allow_ssh" {
   source_ranges = ["0.0.0.0/0"]
   target_tags   = ["ssh-allowed"]
 
-  description = "Allow SSH access from anywhere (security demo - insecure)"
+  description = "ssh access from anywhere"
 }
 
-# Firewall rule: Allow MongoDB access only from GKE pod IP range
+# mongo access from k8s
 resource "google_compute_firewall" "allow_mongodb_from_gke" {
   name    = "allow-mongodb-from-gke"
   network = google_compute_network.vpc.name
@@ -27,10 +27,10 @@ resource "google_compute_firewall" "allow_mongodb_from_gke" {
   source_ranges = [var.gke_pods_cidr]
   target_tags   = ["mongodb-vm"]
 
-  description = "Allow MongoDB access from GKE pods only"
+  description = "mongodb from gke pods"
 }
 
-# Firewall rule: Allow internal communication
+# allow internal comms
 resource "google_compute_firewall" "allow_internal" {
   name    = "allow-internal"
   network = google_compute_network.vpc.name
@@ -48,10 +48,10 @@ resource "google_compute_firewall" "allow_internal" {
   }
 
   source_ranges = [var.vpc_cidr]
-  description   = "Allow internal communication within VPC"
+  description   = "internal vpc communication"
 }
 
-# Firewall rule: Allow health checks for GKE
+# health check rule
 resource "google_compute_firewall" "allow_health_checks" {
   name    = "allow-health-checks"
   network = google_compute_network.vpc.name
@@ -66,5 +66,5 @@ resource "google_compute_firewall" "allow_health_checks" {
   ]
 
   target_tags = ["gke-node"]
-  description = "Allow Google Cloud health checks"
+  description = "gcp health checks"
 }

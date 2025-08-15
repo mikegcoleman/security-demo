@@ -1,33 +1,36 @@
-# GKE Standard cluster
+# k8s cluster
 resource "google_container_cluster" "primary" {
   name     = var.cluster_name
   location = var.zone
 
-  # VPC-native networking
+  # network stuff
   network    = google_compute_network.vpc.id
   subnetwork = google_compute_subnetwork.gke_subnet.id
 
-  # IP aliasing (VPC-native) configuration
+  # ip ranges
   ip_allocation_policy {
     cluster_secondary_range_name  = "gke-pods"
     services_secondary_range_name = "gke-services"
   }
 
-  # Remove default node pool
+  # no default nodes
   remove_default_node_pool = true
   initial_node_count       = 1
 
-  # Workload Identity disabled as requested
+  # allow deletion
+  deletion_protection = false
+
+  # disable workload identity
   workload_identity_config {
     workload_pool = null
   }
 
-  # Network policy disabled for simplicity
+  # network policy on
   network_policy {
-    enabled = false
+    enabled = true
   }
 
-  # Private cluster configuration (optional - allows external access via LoadBalancer)
+  # public cluster
   private_cluster_config {
     enable_private_nodes    = false
     enable_private_endpoint = false
@@ -39,7 +42,7 @@ resource "google_container_cluster" "primary" {
   ]
 }
 
-# Node pool with e2-small machines
+# node pool
 resource "google_container_node_pool" "primary_nodes" {
   name       = "${var.cluster_name}-node-pool"
   location   = var.zone
@@ -48,12 +51,15 @@ resource "google_container_node_pool" "primary_nodes" {
 
   node_config {
     preemptible  = false
-    machine_type = "e2-small"
+    machine_type = "e2-medium"
+    image_type   = "UBUNTU_CONTAINERD"
 
-    # Google recommends custom service accounts with minimal permissions
-    service_account = google_service_account.gke_service_account.email
+    # use default SA
+    # service_account = google_service_account.gke_service_account.email
     oauth_scopes = [
-      "https://www.googleapis.com/auth/cloud-platform"
+      "https://www.googleapis.com/auth/cloud-platform",
+      "https://www.googleapis.com/auth/logging.write",
+      "https://www.googleapis.com/auth/monitoring"
     ]
 
     labels = {
@@ -69,13 +75,13 @@ resource "google_container_node_pool" "primary_nodes" {
   }
 }
 
-# Service account for GKE nodes
+# gke service account
 resource "google_service_account" "gke_service_account" {
   account_id   = "gke-service-account"
   display_name = "GKE Service Account"
 }
 
-# IAM binding for GKE service account
+# gke permissions
 resource "google_project_iam_member" "gke_service_account_roles" {
   for_each = toset([
     "roles/logging.logWriter",

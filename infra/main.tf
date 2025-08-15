@@ -1,4 +1,4 @@
-# Enable required Google Cloud APIs
+# turn on APIs
 resource "google_project_service" "apis" {
   for_each = toset([
     "compute.googleapis.com",

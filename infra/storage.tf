@@ -1,14 +1,15 @@
-# GCS bucket for MongoDB backups (with intentional public access for demo)
+# bucket for mongo backups
 resource "google_storage_bucket" "backup_bucket" {
-  name     = var.bucket_name
-  location = var.region
+  name          = var.bucket_name
+  location      = var.region
+  force_destroy = true
 
-  # Versioning enabled
+  # enable versioning
   versioning {
     enabled = true
   }
 
-  # Lifecycle management
+  # auto delete after 30d
   lifecycle_rule {
     condition {
       age = 30
@@ -18,30 +19,30 @@ resource "google_storage_bucket" "backup_bucket" {
     }
   }
 
-  # Public access prevention disabled (insecure for demo)
+  # allow public access
   public_access_prevention = "inherited"
 
-  # Uniform bucket-level access
+  # uniform access
   uniform_bucket_level_access = true
 
   depends_on = [google_project_service.apis]
 }
 
-# IAM binding: Grant public read access to allUsers (insecure for demo)
+# make bucket public readable
 resource "google_storage_bucket_iam_member" "public_read" {
   bucket = google_storage_bucket.backup_bucket.name
   role   = "roles/storage.objectViewer"
   member = "allUsers"
 }
 
-# IAM binding: Grant public list access to allUsers (insecure for demo)
+# public list access
 resource "google_storage_bucket_iam_member" "public_list" {
   bucket = google_storage_bucket.backup_bucket.name
   role   = "roles/storage.legacyBucketReader"
   member = "allUsers"
 }
 
-# Create a sample backup file for demonstration
+# demo file
 resource "google_storage_bucket_object" "sample_backup" {
   name   = "backups/sample_backup_demo.txt"
   bucket = google_storage_bucket.backup_bucket.name

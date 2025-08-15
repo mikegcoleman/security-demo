@@ -1,14 +1,14 @@
-# Artifact Registry Docker repository
+# docker registry
 resource "google_artifact_registry_repository" "docker_repo" {
   location      = var.region
   repository_id = "security-demo-docker"
-  description   = "Docker repository for security demo applications"
+  description   = "docker repo for demo apps"
   format        = "DOCKER"
 
   depends_on = [google_project_service.apis]
 }
 
-# IAM binding to allow GKE service account to pull images
+# let gke pull images
 resource "google_artifact_registry_repository_iam_member" "gke_reader" {
   project    = var.project_id
   location   = google_artifact_registry_repository.docker_repo.location

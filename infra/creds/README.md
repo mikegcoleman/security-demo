@@ -40,6 +40,19 @@ do
     --role="$ROLE"
 done
 
+# Grant service account user permissions for VM creation
+gcloud iam service-accounts add-iam-policy-binding \
+  "$SA_EMAIL" \
+  --member="serviceAccount:$SA_EMAIL" \
+  --role="roles/iam.serviceAccountUser"
+
+# Grant permission to use default compute service account
+COMPUTE_SA="${PROJECT_ID//-/}@developer.gserviceaccount.com"
+gcloud iam service-accounts add-iam-policy-binding \
+  "$COMPUTE_SA" \
+  --member="serviceAccount:$SA_EMAIL" \
+  --role="roles/iam.serviceAccountUser"
+
 # Create and download a key for Terraform to use
 gcloud iam service-accounts keys create terraform-key.json \
   --iam-account="$SA_EMAIL"
