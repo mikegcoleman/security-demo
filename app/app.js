@@ -35,7 +35,7 @@ async function connectDB() {
         db = client.db(MONGO_DB);
         console.log(`Connected to MongoDB at ${MONGO_URI} <-- well lookee there`);
         
-        // Create initial collections if they don't exist
+        // Create initial collections if needed
         await ensureCollectionExists('users');
         await ensureCollectionExists('todos');
         
