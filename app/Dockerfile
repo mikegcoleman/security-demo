@@ -15,7 +15,6 @@ RUN npm install --production
 
 # Copy static directories (less likely to change)
 COPY views/ ./views/
-COPY public/ ./public/
 
 # Copy application code (more likely to change)
 COPY app.js .
