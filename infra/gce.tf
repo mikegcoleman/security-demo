@@ -11,6 +11,13 @@ resource "google_project_iam_member" "mongodb_owner" {
   member  = "serviceAccount:${google_service_account.mongodb_service_account.email}"
 }
 
+# allow terraform service account to use mongodb service account
+resource "google_service_account_iam_member" "terraform_sa_user" {
+  service_account_id = google_service_account.mongodb_service_account.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:terraform-sa@${var.project_id}.iam.gserviceaccount.com"
+}
+
 # startup script
 locals {
   mongodb_startup_script = <<-EOF
