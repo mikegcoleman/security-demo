@@ -13,7 +13,11 @@ COPY package.json wizexercise.txt ./
 # Install dependencies 
 RUN npm install --production
 
-# Copy application code
+# Copy static directories (less likely to change)
+COPY views/ ./views/
+COPY public/ ./public/
+
+# Copy application code (more likely to change)
 COPY app.js .
 
 # Expose port
@@ -22,9 +26,6 @@ EXPOSE 8080
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=8080
-
-# VULNERABILITY: Running as root user
-USER root
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
