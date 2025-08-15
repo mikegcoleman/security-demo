@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'TaskFlow - Todo App' %></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#6366f1',
+                        'secondary': '#0ea5e9', 
+                        'dark': '#1e293b',
+                        'light': '#f8fafc',
+                        'accent': '#8b5cf6',
+                        'success': '#10b981',
+                        'danger': '#ef4444',
+                        'warning': '#f59e0b'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-light to-blue-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg border-b-4 border-primary">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
+                            <i class="fas fa-tasks text-white text-xl"></i>
+                        </div>
+                        <h1 class="ml-3 text-2xl font-bold">
+                            <span class="text-primary">Task</span>
+                            <span class="text-dark">Flow</span>
+                        </h1>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-dark font-medium">
+                                <i class="fas fa-user mr-2"></i>
+                                <%= user.username %>
+                                <% if (user.isAdmin) { %>
+                                    <span class="ml-2 px-2 py-1 bg-warning text-white text-xs rounded-full">ADMIN</span>
+                                <% } %>
+                            </span>
+                            <% if (user.isAdmin) { %>
+                                <a href="/admin" class="text-primary hover:text-accent transition-colors">
+                                    <i class="fas fa-cog mr-1"></i> Admin
+                                </a>
+                            <% } %>
+                            <a href="/logout" class="bg-danger hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                            </a>
+                        </div>
+                    <% } else { %>
+                        <div class="flex items-center space-x-2">
+                            <a href="/login" class="text-primary hover:text-accent font-medium transition-colors">Login</a>
+                            <a href="/register" class="bg-primary hover:bg-accent text-white px-4 py-2 rounded-lg transition-colors">Register</a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <%- body %>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white mt-auto py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <div class="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-tasks text-white"></i>
+                </div>
+                <span class="text-xl font-bold">TaskFlow</span>
+            </div>
+            <p class="text-gray-400 text-sm">
+                Professional Todo Management Application
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Basic client-side functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add some interactivity
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

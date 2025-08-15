@@ -1,0 +1,158 @@
+<%- include('layout', {body: `
+<div class="max-w-6xl mx-auto">
+    <!-- Admin Header -->
+    <div class="bg-gradient-to-r from-primary to-secondary rounded-2xl shadow-xl p-8 mb-8 text-white">
+        <h1 class="text-3xl font-bold flex items-center">
+            <i class="fas fa-shield-alt mr-3"></i>
+            Admin Dashboard
+        </h1>
+        <p class="mt-2 opacity-90">System administration and user management</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-primary">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Users</p>
+                    <p class="text-3xl font-bold text-primary">${users.length}</p>
+                </div>
+                <div class="w-12 h-12 bg-primary bg-opacity-10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-primary text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-success">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Todos</p>
+                    <p class="text-3xl font-bold text-success">${todos.length}</p>
+                </div>
+                <div class="w-12 h-12 bg-success bg-opacity-10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tasks text-success text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-warning">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Admins</p>
+                    <p class="text-3xl font-bold text-warning">${users.filter(u => u.isAdmin).length}</p>
+                </div>
+                <div class="w-12 h-12 bg-warning bg-opacity-10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-crown text-warning text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-2xl shadow-xl mb-8 overflow-hidden">
+        <div class="bg-dark text-white p-6">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-users mr-3"></i>
+                User Management
+            </h2>
+        </div>
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Password Hash</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${users.map(user => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 ${user.isAdmin ? 'bg-warning' : 'bg-primary'} rounded-full flex items-center justify-center">
+                                        <i class="fas ${user.isAdmin ? 'fa-crown' : 'fa-user'} text-white"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">${user.username}</div>
+                                        <div class="text-sm text-gray-500">ID: ${user._id}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${user.email || 'Not provided'}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.isAdmin ? 'bg-warning text-white' : 'bg-primary text-white'}">
+                                    ${user.isAdmin ? 'Administrator' : 'User'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${new Date(user.created).toLocaleDateString()}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-400">
+                                ${user.password.substring(0, 20)}...
+                            </td>
+                        </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Todos Table -->
+    <div class="bg-white rounded-2xl shadow-xl mb-8 overflow-hidden">
+        <div class="bg-accent text-white p-6">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-tasks mr-3"></i>
+                All Todos (${todos.length} total)
+            </h2>
+        </div>
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Todo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${todos.map(todo => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">${todo.title}</div>
+                                ${todo.description ? `<div class="text-sm text-gray-500">${todo.description}</div>` : ''}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${todo.username}
+                                <div class="text-xs text-gray-500">${todo.userId}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${todo.completed ? 'bg-success text-white' : 'bg-warning text-white'}">
+                                    ${todo.completed ? 'Completed' : 'Pending'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${new Date(todo.created).toLocaleDateString()}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-400">
+                                ${todo._id}
+                            </td>
+                        </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+`, title: 'Admin Dashboard - TaskFlow'}) %>

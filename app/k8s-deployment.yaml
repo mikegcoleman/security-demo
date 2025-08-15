@@ -1,64 +1,44 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: cluster-admin-app
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: cluster-admin-app-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: cluster-admin-app
-  namespace: default
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mongodb-test-app
-  labels:
-    app: mongodb-test-app
+  name: taskflow-todo-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mongodb-test-app
+      app: taskflow-todo-app
   template:
     metadata:
       labels:
-        app: mongodb-test-app
+        app: taskflow-todo-app
     spec:
-      serviceAccountName: cluster-admin-app
+      serviceAccountName: taskflow-app
       containers:
-      - name: app
-        image: us-west1-docker.pkg.dev/clgcporg10-172/security-demo-docker/mongodb-test-app:latest
+      - name: todo-app
+        image: us-west1-docker.pkg.dev/clgcporg10-172/security-demo-docker/taskflow-todo-app:latest
+        ports:
         - containerPort: 8080
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        env:
+        - name: MONGO_HOST
+          value: "10.0.2.9"
+        - name: MONGO_PORT
+          value: "27017"
+        - name: MONGO_USER
+          value: "appuser"
+        - name: MONGO_PASS
+          value: "apppass123"
+        - name: MONGO_DB
+          value: "appdb"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb-test-service
+  name: taskflow-todo-service
 spec:
   selector:
-    app: mongodb-test-app
+    app: taskflow-todo-app
   ports:
-  - port: 80
+  - name: http
+    port: 80
     targetPort: 8080
-  type: LoadBalancer
-        ports:
+    protocol: TCP
