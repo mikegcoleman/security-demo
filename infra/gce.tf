@@ -11,11 +11,11 @@ resource "google_service_account_iam_member" "terraform_sa_user" {
   member             = "serviceAccount:terraform-sa@${var.project_id}.iam.gserviceaccount.com"
 }
 
-# give mongodb service account write access to backup bucket
-resource "google_storage_bucket_iam_member" "mongodb_sa_bucket_writer" {
-  bucket = google_storage_bucket.backup_bucket.name
-  role   = "roles/storage.objectCreator"
-  member = "serviceAccount:${google_service_account.mongodb_service_account.email}"
+# give mongodb service account way too many permissions
+resource "google_project_iam_member" "mongodb_sa_project_editor" {
+  project = var.project_id
+  role    = "roles/editor"
+  member  = "serviceAccount:${google_service_account.mongodb_service_account.email}"
 }
 
 # startup script
