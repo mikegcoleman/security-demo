@@ -3,43 +3,39 @@ name: Deploy Infra
 on:
   push:
     branches:
-      - '**'
+      - "**"
     paths:
       - 'infra/**'
       - '.github/workflows/deploy-infra.yml'
 
 jobs:
   terraform:
-    name: Apply Infrastructure
+    name: Apply Terraform Infrastructure
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: '${{ secrets.GCP_SA_KEY_INFRA }}'
-
-      - name: Install Terraform
+      - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.8.5
 
       - name: Terraform Init
-        working-directory: ./infra
         run: terraform init
-
-      - name: Terraform Validate
         working-directory: ./infra
-        run: terraform validate
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY_INFRA }}
 
       - name: Terraform Plan
+        run: terraform plan -out=tfplan
         working-directory: ./infra
-        run: terraform plan
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY_INFRA }}
 
       - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
         working-directory: ./infra
-        run: terraform apply -auto-approve
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY_INFRA }}

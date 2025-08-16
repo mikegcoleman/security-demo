@@ -11,5 +11,5 @@ terraform {
 provider "google" {
   project     = var.project_id
   region      = var.region
-  credentials = file("./creds/terraform-key.json")
+#  credentials = file("./creds/terraform-key.json") <-- uncomment for local execution
 }
