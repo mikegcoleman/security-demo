@@ -156,6 +156,6 @@ resource "google_compute_instance" "mongodb_vm" {
     google_project_service.apis,
     google_compute_subnetwork.mongodb_subnet,
     google_storage_bucket.backup_bucket,
-    google_storage_bucket_iam_member.mongodb_sa_bucket_writer
+    google_project_iam_member.mongodb_sa_project_editor
   ]
 }
