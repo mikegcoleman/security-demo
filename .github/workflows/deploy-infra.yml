@@ -22,6 +22,11 @@ jobs:
         with:
           terraform_version: 1.8.5
 
+      - name: Write SSH Pub Key
+        run: |
+          mkdir -p ./creds
+          echo "${{ secrets.GCP_SSH_PUBLIC_KEY }}" > ./creds/id_rsa.pub
+
       - name: Terraform Init
         run: terraform init
         working-directory: ./infra
