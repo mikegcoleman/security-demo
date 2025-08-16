@@ -6,6 +6,11 @@ terraform {
       version = "~> 6.0"
     }
   }
+  
+  backend "gcs" {
+    bucket = "clgcporg10-172-terraform-state"
+    prefix = "security-demo"
+  }
 }
 
 provider "google" {

@@ -27,6 +27,7 @@ jobs:
           mkdir -p ./infra/creds
           echo "${{ secrets.GCP_SSH_PUBLIC_KEY }}" > ./infra/creds/id_rsa.pub
 
+
       - name: Terraform Init
         run: terraform init
         working-directory: ./infra
