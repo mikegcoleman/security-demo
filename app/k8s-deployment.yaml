@@ -44,3 +44,49 @@ spec:
     targetPort: 8080
     protocol: TCP
   type: LoadBalancer
+  apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskflow-todo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: taskflow-todo-app
+  template:
+    metadata:
+      labels:
+        app: taskflow-todo-app
+    spec:
+      serviceAccountName: taskflow-app
+      containers:
+      - name: todo-app
+        image: us-west1-docker.pkg.dev/clgcporg10-172/security-demo-docker/taskflow-todo-app:latest
+        ports:
+        - containerPort: 8080
+        env:
+        env:
+          - name: MONGO_URI
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secret
+                key: MONGO_URI
+          - name: MONGO_DB
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secret
+                key: MONGO_DB
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taskflow-todo-service
+spec:
+  selector:
+    app: taskflow-todo-app
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  type: LoadBalancer
