@@ -8,7 +8,8 @@ resource "google_project_service" "apis" {
     "logging.googleapis.com",
     "artifactregistry.googleapis.com",
     "securitycenter.googleapis.com",
-    "binaryauthorization.googleapis.com"
+    "binaryauthorization.googleapis.com",
+    "containeranalysis.googleapis.com"
   ])
 
   project = var.project_id
