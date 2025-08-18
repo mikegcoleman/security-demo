@@ -2,8 +2,7 @@ name: Build and Deploy Taskflow App
 
 on:
   push:
-    branches:
-      - '**'
+    branches: ['**']
     paths:
       - 'app/**'
       - '.github/workflows/deploy-app.yml'
@@ -11,45 +10,76 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}   # clgcporg10-172
+      REGION: us-west1
+      REPO: security-demo-docker
+      IMAGE_NAME: taskflow-todo-app
+      USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: Authenticate to Google Cloud
-      id: auth
+    - name: Authenticate to Google Cloud (SA key)
       uses: google-github-actions/auth@v2
       with:
-        credentials_json: '${{ secrets.GCP_SA_KEY_APP }}'
+        credentials_json: ${{ secrets.GCP_SA_KEY_APP }}
 
     - name: Set up gcloud CLI
       uses: google-github-actions/setup-gcloud@v2
       with:
-        project_id: clgcporg10-172
+        project_id: ${{ env.PROJECT_ID }}
 
-    - name: Install GKE Auth Plugin
-      run: |
-        gcloud components install gke-gcloud-auth-plugin --quiet
+    - name: Install GKE Auth Plugin (sometimes already present)
+      run: gcloud components install gke-gcloud-auth-plugin --quiet || true
 
     - name: Configure Docker for Artifact Registry
-      run: gcloud auth configure-docker us-west1-docker.pkg.dev
+      run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
     - name: Build and Push Docker image
+      shell: bash
       run: |
-        SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
-        IMAGE="us-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/security-demo-docker/taskflow-todo-app:$SHORT_SHA"
-        docker build -t "$IMAGE" ./app
-        docker push "$IMAGE"
-        echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+        set -euo pipefail
+        SHORT_SHA="${GITHUB_SHA::7}"
+        IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE_NAME}"
+        IMAGE_TAG="${IMAGE_PATH}:${SHORT_SHA}"
+        docker build -t "${IMAGE_TAG}" ./app
+        docker push "${IMAGE_TAG}"
+        echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+
+    - name: Resolve digest for attestation
+      shell: bash
+      run: |
+        set -euo pipefail
+        # returns something like: us-west1-docker.pkg.dev/.../taskflow-todo-app@sha256:abcd...
+        DIGEST_REF="$(gcloud artifacts docker images describe "${IMAGE_TAG}" \
+          --format='value(image_summary.fully_qualified_digest)')"
+        if [[ -z "${DIGEST_REF}" ]]; then
+          echo "failed to resolve digest" >&2
+          exit 1
+        fi
+        echo "DIGEST_REF=${DIGEST_REF}" >> "$GITHUB_ENV"
+        echo "Resolved digest: ${DIGEST_REF}"
+
+    - name: Sign & create Binary Authorization attestation
+      run: |
+        gcloud beta container binauthz attestations sign-and-create \
+          --project="${PROJECT_ID}" \
+          --artifact-url="${DIGEST_REF}" \
+          --attestor="signed-images-attestor" \
+          --attestor-project="${PROJECT_ID}" \
+          --keyversion-project="${PROJECT_ID}" \
+          --keyversion-location="${REGION}" \
+          --keyversion-keyring="binauthz-keyring" \
+          --keyversion-key="binauthz-kms-key-name" \
+          --keyversion="1"
 
     - name: Get GKE credentials
-      run: |
-        gcloud container clusters get-credentials security-demo-cluster --zone=us-west1-a
+      run: gcloud container clusters get-credentials security-demo-cluster --zone=us-west1-a --project="${PROJECT_ID}"
 
-    - name: Apply Kubernetes manifests (if not already applied)
-      run: |
-        kubectl apply -f ./app/k8s-deployment.yaml
+    - name: Apply Kubernetes manifests
+      run: kubectl apply -f ./app/k8s-deployment.yaml
 
-    - name: Update Deployment Image
-      run: |
-        kubectl set image deployment/taskflow-todo-app todo-app=$IMAGE
+    - name: Update Deployment Image (use the tag you just built)
+      run: kubectl set image deployment/taskflow-todo-app todo-app="${IMAGE_TAG}" && kubectl rollout status deployment/taskflow-todo-app
