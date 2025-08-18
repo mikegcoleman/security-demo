@@ -34,6 +34,11 @@ resource "google_container_cluster" "primary" {
     env = "security-demo"
   }
 
+  # Binary Authorization
+  binary_authorization {
+    evaluation_mode = "PROJECT_SINGLETON_POLICY_ENFORCE"
+  }
+
   depends_on = [
     google_project_service.apis,
     google_compute_subnetwork.gke_subnet
