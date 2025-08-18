@@ -1,3 +1,9 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: taskflow-app
+  namespace: default
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -55,4 +61,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: taskflow-app
-    namespace: default  # change if your SA is in a different namespace
+    namespace: default  
