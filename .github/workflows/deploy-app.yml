@@ -83,4 +83,4 @@ jobs:
       run: kubectl apply -f ./app/k8s-deployment.yaml
 
     - name: Update Deployment Image (use the tag you just built)
-      run: kubectl set image deployment/taskflow-todo-app todo-app="${IMAGE_TAG}" && kubectl rollout status deployment/taskflow-todo-app
+      run: kubectl set image deployment/taskflow-todo-app todo-app="${DIGEST_REF}" && kubectl rollout status deployment/taskflow-todo-app
