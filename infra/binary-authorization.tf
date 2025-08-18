@@ -32,8 +32,7 @@ resource "google_binary_authorization_attestor" "attestor" {
   name    = "signed-images-attestor"
 
   attestation_authority_note {
-    note_reference                    = google_container_analysis_note.note.name
-    delegation_service_account_email = "service-669566199522@gcp-sa-binaryauthorization.iam.gserviceaccount.com"
+    note_reference = google_container_analysis_note.note.name
     
     public_keys {
       id = "//cloudkms.googleapis.com/v1/projects/${var.project_id}/locations/us-west1/keyRings/binauthz-keyring/cryptoKeys/binauthz-kms-key-name/cryptoKeyVersions/1"
