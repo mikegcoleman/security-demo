@@ -31,7 +31,7 @@ resource "google_binary_authorization_attestor" "attestor" {
   project = var.project_id
   name    = "signed-images-attestor"
 
-  user_owned_grafeas_note {
+  attestation_authority_note {
     note_reference                    = google_container_analysis_note.note.name
     delegation_service_account_email = "service-669566199522@gcp-sa-binaryauthorization.iam.gserviceaccount.com"
     
