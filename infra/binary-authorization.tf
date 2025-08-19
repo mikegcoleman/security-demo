@@ -29,7 +29,7 @@ resource "google_binary_authorization_policy" "policy" {
 # Binary Authorization Attestor using KMS key
 resource "google_binary_authorization_attestor" "attestor" {
   project = var.project_id
-  name    = "signed-images-attestor"
+  name    = "signed-images-attestor-v2"
 
   attestation_authority_note {
     note_reference = google_container_analysis_note.note.name
@@ -55,7 +55,7 @@ EOT
 # Container Analysis Note for attestor
 resource "google_container_analysis_note" "note" {
   project = var.project_id
-  name    = "signed-images-note"
+  name    = "signed-images-note-v2"
 
   attestation_authority {
     hint {

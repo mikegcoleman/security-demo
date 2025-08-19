@@ -21,6 +21,7 @@ wiz security exercise implementation with:
 terraform commands:
 ```bash
 cd infra
+export GOOGLE_APPLICATION_CREDENTIALS=./creds/<credential-file>.json
 terraform plan
 terraform apply
 ```
