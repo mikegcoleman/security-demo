@@ -1,0 +1,41 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: deny-cluster-admin-to-serviceaccounts
+  annotations:
+    policies.kyverno.io/title: "Block ServiceAccount Cluster Admin Bindings"
+    policies.kyverno.io/category: "Security"
+    policies.kyverno.io/description: "Prevents cluster-admin role from being granted to ServiceAccounts"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: block-crb-rb-to-sas
+    match:
+      any:
+      - resources:
+          kinds: ["ClusterRoleBinding","RoleBinding"]
+    exclude:
+      any:
+      - resources:
+          namespaces: ["kube-system"]
+    validate:
+      message: "Granting cluster-admin to ServiceAccounts is prohibited. Use rbac.breakglass/approved: 'true' annotation if required."
+      foreach:
+      - list: "request.object.subjects || []"
+        deny:
+          conditions:
+            all:
+            - key: "{{ request.object.roleRef.kind }}"
+              operator: Equals
+              value: "ClusterRole"
+            - key: "{{ request.object.roleRef.name }}"
+              operator: Equals
+              value: "cluster-admin"
+            - key: "{{ element.kind }}"
+              operator: Equals
+              value: "ServiceAccount"
+            # optional break-glass: require an annotation to bypass
+            - key: "{{ request.object.metadata.annotations.\"rbac.breakglass/approved\" || '' }}"
+              operator: NotEquals
+              value: "true"
