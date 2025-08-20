@@ -16,7 +16,7 @@ const MONGO_DB = process.env.MONGO_DB || "appdb";
 const MONGO_URI = process.env.MONGO_URI
 
 if (MONGO_URI === "") {
-    console.error("Database connection string needs to be specified");
+    console.error("Database connection string is mandatory");
     process.exit(1);
 }
 
