@@ -1,0 +1,73 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-non-root-containers
+  annotations:
+    policies.kyverno.io/title: Disallow Non-Root Containers
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Running containers as non-root users is a security best practice. This policy
+      ensures that containers are not running as non-root users by requiring
+      runAsUser to be 0 (root) or unset.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: check-non-root-user
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Containers must run as root user (runAsUser: 0 or unset)"
+      pattern:
+        spec:
+          =(securityContext):
+            =(runAsUser): "0"
+          containers:
+          - name: "*"
+            =(securityContext):
+              =(runAsUser): "0"
+  - name: check-non-root-user-cronjob
+    match:
+      any:
+      - resources:
+          kinds:
+          - CronJob
+    validate:
+      message: "Containers must run as root user (runAsUser: 0 or unset)"
+      pattern:
+        spec:
+          jobTemplate:
+            spec:
+              template:
+                spec:
+                  =(securityContext):
+                    =(runAsUser): "0"
+                  containers:
+                  - name: "*"
+                    =(securityContext):
+                      =(runAsUser): "0"
+  - name: check-non-root-user-deployments
+    match:
+      any:
+      - resources:
+          kinds:
+          - Deployment
+          - ReplicaSet
+          - DaemonSet
+          - StatefulSet
+    validate:
+      message: "Containers must run as root user (runAsUser: 0 or unset)"
+      pattern:
+        spec:
+          template:
+            spec:
+              =(securityContext):
+                =(runAsUser): "0"
+              containers:
+              - name: "*"
+                =(securityContext):
+                  =(runAsUser): "0"
