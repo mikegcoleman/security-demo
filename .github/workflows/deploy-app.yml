@@ -68,7 +68,7 @@ jobs:
         gcloud beta container binauthz attestations sign-and-create \
           --project="${PROJECT_ID}" \
           --artifact-url="${DIGEST_REF}" \
-          --attestor="signed-images-attestor" \
+          --attestor="signed-images-attestor-v2" \
           --attestor-project="${PROJECT_ID}" \
           --keyversion-project="${PROJECT_ID}" \
           --keyversion-location="${REGION}" \
