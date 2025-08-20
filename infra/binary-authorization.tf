@@ -10,6 +10,10 @@ resource "google_binary_authorization_policy" "policy" {
   admission_whitelist_patterns {
     name_pattern = "ghcr.io/kyverno/**"
   }
+  
+  admission_whitelist_patterns {
+    name_pattern = "docker.io/falcosecurity/**"
+  }
 
   # Default admission rule - REQUIRE_ATTESTATION for production
   default_admission_rule {
