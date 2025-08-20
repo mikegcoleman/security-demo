@@ -1,0 +1,91 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-root-containers
+  annotations:
+    policies.kyverno.io/title: Disallow Root Containers
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Running containers as non-root users is a security best practice. This policy
+      blocks containers from running as root user (UID 0) by denying pods where
+      runAsUser is 0 or unset.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: check-root-user
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces: ["kube-system", "gmp-system", "gke-managed-cim", "kyverno"]
+    validate:
+      message: "Containers must not run as root user (runAsUser must be > 0)"
+      deny:
+        conditions:
+          any:
+          - key: "{{ request.object.spec.securityContext.runAsUser || `0` }}"
+            operator: Equals
+            value: 0
+          - key: "{{ request.object.spec.containers[?securityContext.runAsUser == `0`] | length(@) }}"
+            operator: GreaterThan
+            value: 0
+          - key: "{{ request.object.spec.containers[?!securityContext || !securityContext.runAsUser] | length(@) }}"
+            operator: GreaterThan
+            value: 0
+  - name: check-root-user-cronjob
+    match:
+      any:
+      - resources:
+          kinds:
+          - CronJob
+    exclude:
+      any:
+      - resources:
+          namespaces: ["kube-system", "gmp-system", "gke-managed-cim", "kyverno"]
+    validate:
+      message: "Containers must not run as root user (runAsUser must be > 0)"
+      deny:
+        conditions:
+          any:
+          - key: "{{ request.object.spec.jobTemplate.spec.template.spec.securityContext.runAsUser || `0` }}"
+            operator: Equals
+            value: 0
+          - key: "{{ request.object.spec.jobTemplate.spec.template.spec.containers[?securityContext.runAsUser == `0`] | length(@) }}"
+            operator: GreaterThan
+            value: 0
+          - key: "{{ request.object.spec.jobTemplate.spec.template.spec.containers[?!securityContext || !securityContext.runAsUser] | length(@) }}"
+            operator: GreaterThan
+            value: 0
+  - name: check-root-user-deployments
+    match:
+      any:
+      - resources:
+          kinds:
+          - Deployment
+          - ReplicaSet
+          - DaemonSet
+          - StatefulSet
+    exclude:
+      any:
+      - resources:
+          namespaces: ["kube-system", "gmp-system", "gke-managed-cim", "kyverno"]
+    validate:
+      message: "Containers must not run as root user (runAsUser must be > 0)"
+      deny:
+        conditions:
+          any:
+          - key: "{{ request.object.spec.template.spec.securityContext.runAsUser || `0` }}"
+            operator: Equals
+            value: 0
+          - key: "{{ request.object.spec.template.spec.containers[?securityContext.runAsUser == `0`] | length(@) }}"
+            operator: GreaterThan
+            value: 0
+          - key: "{{ request.object.spec.template.spec.containers[?!securityContext || !securityContext.runAsUser] | length(@) }}"
+            operator: GreaterThan
+            value: 0
