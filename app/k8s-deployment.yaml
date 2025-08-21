@@ -19,9 +19,15 @@ spec:
         app: taskflow-todo-app
     spec:
       serviceAccountName: taskflow-app
+      securityContext:
+        runAsUser: 1000
+        runAsNonRoot: true
       containers:
         - name: todo-app
           image: us-west1-docker.pkg.dev/clgcporg10-172/security-demo-docker/taskflow-todo-app:latest
+          securityContext:
+            runAsUser: 1000
+            runAsNonRoot: true
           ports:
             - containerPort: 8080
           env:

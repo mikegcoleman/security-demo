@@ -32,6 +32,9 @@ spec:
           - key: "{{ request.object.spec.containers[?securityContext.runAsUser == `0`] | length(@) }}"
             operator: GreaterThan
             value: 0
+          - key: "{{ request.object.spec.containers[?!securityContext || !securityContext.runAsUser] | length(@) }}"
+            operator: GreaterThan
+            value: 0
   - name: check-root-user-cronjob
     match:
       any:
@@ -48,6 +51,9 @@ spec:
         conditions:
           any:
           - key: "{{ request.object.spec.jobTemplate.spec.template.spec.containers[?securityContext.runAsUser == `0`] | length(@) }}"
+            operator: GreaterThan
+            value: 0
+          - key: "{{ request.object.spec.jobTemplate.spec.template.spec.containers[?!securityContext || !securityContext.runAsUser] | length(@) }}"
             operator: GreaterThan
             value: 0
   - name: check-root-user-deployments
@@ -69,5 +75,8 @@ spec:
         conditions:
           any:
           - key: "{{ request.object.spec.template.spec.containers[?securityContext.runAsUser == `0`] | length(@) }}"
+            operator: GreaterThan
+            value: 0
+          - key: "{{ request.object.spec.template.spec.containers[?!securityContext || !securityContext.runAsUser] | length(@) }}"
             operator: GreaterThan
             value: 0
