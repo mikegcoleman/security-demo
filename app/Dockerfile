@@ -4,24 +4,26 @@ FROM node:14.15.0-alpine
 # Better version 
 # FROM 22.18.0-alpine3.21
 
-# Set working directory
+# Set working directory and fix ownership
 WORKDIR /app
+RUN chown node:node /app
+
+USER node
 
 # Copy package files
-COPY package.json wizexercise.txt ./
+COPY --chown=node:node package.json wizexercise.txt ./
 
 # Install dependencies 
 RUN npm install --production
 
 # Copy static directories (less likely to change)
-COPY views/ ./views/
+COPY --chown=node:node views/ ./views/
 
 # Copy application code (more likely to change)
-COPY app.js .
+COPY --chown=node:node app.js .
 
 # Expose port
 EXPOSE 8080
-
 
  
 
