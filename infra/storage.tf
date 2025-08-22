@@ -29,18 +29,19 @@ resource "google_storage_bucket" "backup_bucket" {
 }
 
 # make bucket public readable
-resource "google_storage_bucket_iam_member" "public_read" {
-  bucket = google_storage_bucket.backup_bucket.name
-  role   = "roles/storage.objectViewer"
-  member = "allUsers"
-}
+# NOTE: Bucket already exists with public access for security exercise
+# resource "google_storage_bucket_iam_member" "public_read" {
+#   bucket = google_storage_bucket.backup_bucket.name
+#   role   = "roles/storage.objectViewer"
+#   member = "allUsers"
+# }
 
 # public list access
-resource "google_storage_bucket_iam_member" "public_list" {
-  bucket = google_storage_bucket.backup_bucket.name
-  role   = "roles/storage.legacyBucketReader"
-  member = "allUsers"
-}
+# resource "google_storage_bucket_iam_member" "public_list" {
+#   bucket = google_storage_bucket.backup_bucket.name
+#   role   = "roles/storage.legacyBucketReader"
+#   member = "allUsers"
+# }
 
 # Note: Real MongoDB backups are created by the backup script on the VM
 # and uploaded to the backups/ folder in this bucket
