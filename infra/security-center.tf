@@ -146,6 +146,14 @@ resource "google_project_service" "cloudbuild" {
   disable_on_destroy         = false
 }
 
+resource "google_project_service" "cloudrun" {
+  project = var.project_id
+  service = "run.googleapis.com"
+
+  disable_dependent_services = true
+  disable_on_destroy         = false
+}
+
 # storage bucket for cloud function source code
 resource "google_storage_bucket" "function_source" {
   name          = "${var.project_id}-falco-scc-function"
@@ -216,6 +224,7 @@ resource "google_cloudfunctions_function" "falco_to_scc" {
   depends_on = [
     google_project_service.cloudfunctions,
     google_project_service.securitycenter,
+    google_project_service.cloudrun,
     google_storage_bucket_object.function_source_zip,
     google_service_account.falco_scc_function
   ]
