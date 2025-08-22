@@ -64,3 +64,4 @@ terraform adds key to mongodb vm authorized_keys
 
 ssh keys excluded from git# SA permissions updated
 # Cloud Run developer permission added
+# Cloud Functions Service Agent role added
