@@ -4,7 +4,7 @@ resource "google_storage_bucket" "backup_bucket" {
   location      = var.region
   force_destroy = true
 
-  # enable versioning
+  # enable versioning for this thing
   versioning {
     enabled = true
   }
