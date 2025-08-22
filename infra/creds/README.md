@@ -62,4 +62,4 @@ cp ~/.ssh/id_rsa.pub ./id_rsa.pub
 
 terraform adds key to mongodb vm authorized_keys
 
-ssh keys excluded from git
+ssh keys excluded from git# SA permissions updated
