@@ -171,7 +171,7 @@ resource "google_project_iam_member" "function_pubsub_subscriber" {
 
 resource "google_project_iam_member" "function_scc_editor" {
   project = var.project_id
-  role    = "roles/securitycenter.findingEditor"
+  role    = "roles/securitycenter.sourcesEditor"
   member  = "serviceAccount:${google_service_account.falco_scc_function.email}"
 }
 
