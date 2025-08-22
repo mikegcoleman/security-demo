@@ -184,48 +184,38 @@ resource "google_storage_bucket_object" "function_source_zip" {
   depends_on = [google_storage_bucket.function_source]
 }
 
-# cloud function for transforming alerts to scc findings
-resource "google_cloudfunctions2_function" "falco_to_scc" {
+# cloud function for transforming alerts to scc findings (using v1 for simpler permissions)
+resource "google_cloudfunctions_function" "falco_to_scc" {
   name        = "falco-to-scc-transformer"
-  location    = var.region
+  region      = var.region
   description = "Transforms Falco alerts from Pub/Sub into Security Command Center findings"
 
-  build_config {
-    runtime     = "python311"
-    entry_point = "process_falco_alert"
-    
-    source {
-      storage_source {
-        bucket = google_storage_bucket.function_source.name
-        object = google_storage_bucket_object.function_source_zip.name
-      }
-    }
+  runtime             = "python311"
+  available_memory_mb = 256
+  timeout             = 60
+  entry_point         = "process_falco_alert"
+  
+  source_archive_bucket = google_storage_bucket.function_source.name
+  source_archive_object = google_storage_bucket_object.function_source_zip.name
+  
+  environment_variables = {
+    PROJECT_ID = var.project_id
   }
-
-  service_config {
-    max_instance_count = 10
-    available_memory   = "256M"
-    timeout_seconds    = 60
-    
-    environment_variables = {
-      PROJECT_ID = var.project_id
-    }
-    
-    service_account_email = google_service_account.falco_scc_function.email
-  }
+  
+  service_account_email = google_service_account.falco_scc_function.email
 
   event_trigger {
-    trigger_region = var.region
-    event_type     = "google.cloud.pubsub.topic.v1.messagePublished"
-    pubsub_topic   = google_pubsub_topic.falco_alerts.id
+    event_type = "providers/cloud.pubsub/eventTypes/topic.publish"
+    resource   = google_pubsub_topic.falco_alerts.name
     
-    retry_policy = "RETRY_POLICY_RETRY"
+    failure_policy {
+      retry = true
+    }
   }
 
   depends_on = [
     google_project_service.cloudfunctions,
     google_project_service.securitycenter,
-    google_project_service.cloudbuild,
     google_storage_bucket_object.function_source_zip,
     google_service_account.falco_scc_function
   ]
