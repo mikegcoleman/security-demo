@@ -110,7 +110,7 @@ resource "google_monitoring_alert_policy" "falco_shell_notification" {
       period = "300s"
     }
     
-    notification_prompt = ["OPENED"]
+    notification_prompts = ["OPENED"]
   }
 
   severity = "CRITICAL"
